@@ -69,8 +69,8 @@ class instructions_params(object):
 
     def randomize_response_instruction(self, condition):
 
-        instruction_dict = {'match' : ['non-match', 'match'],
-                            'non-match' : ['non-match', 'match'],
+        instruction_dict = {'match' : ['non_match', 'match'],
+                            'non_match' : ['non_match', 'match'],
                             'control_horizontal' : ['vertical', 'horizontal'],
                             'control_vertical' : ['vertical', 'horizontal']}
         
@@ -126,35 +126,26 @@ class trial_controller(object):
 
     
     
-
-    all_names = glob.glob('Statki/szkice_*')
-    
-    a_ship = glob.glob('Statki/*a.png')
-    b_ship = glob.glob('Statki/*b.png')
-    
-    pair_dict = dict(zip(a_ship, b_ship))
-    pair_dict.update(dict(zip(b_ship, a_ship)))
-    
     def __init__(self, num_trials):
         
-        self.trial_types = self.create_trial_types(num_trials)
+        self.trial_types, self.ships_dict = self.create_trial_types(num_trials)
 
     def prepare_trial(self):
         t_type = self.trial_types.pop()
-        idx = np.random.randint(0, len(self.all_names))
+        ships = self.ships_dict[t_type].pop()
         
-        sample_ship_name = self.all_names[idx]
-        
+        sample_ship_name = ships[0]
+        target_ship_name =ships[1]
+
+
         self.sample_ship = visual.ImageStim(win=win, image= sample_ship_name)
 
         if 'match' in t_type:
-            if t_type =='non-match': target_ship_name = self.pair_dict[sample_ship_name]
-            if t_type =='match': target_ship_name = sample_ship_name
             self.target_ship = visual.ImageStim(win=win, image= target_ship_name)
             
         if 'control' in t_type:
-            e = self.ellipse(t_type,0)
-            self.target_ship = visual.ShapeStim(win=win, vertices = e.T, units = 'deg')
+            ellipse_vertices = self.ellipse(t_type,0)
+            self.target_ship = visual.ShapeStim(win=win, vertices = ellipse_vertices.T, units = 'deg')
             target_ship_name = 'ellipse'
 
         trial_params= {'t_type' : t_type, 'sample_ship' : sample_ship_name, 'target_ship' : target_ship_name}
@@ -202,26 +193,74 @@ class trial_controller(object):
 
 
     def create_trial_types(self, num_trials):
-        # Define proportion of trials for each angle value
-        num_diff= int(num_trials * 0.3) # Non match
+        # Define number of trials for each condition
+        num_match = int(num_trials * 0.25) # Same ships
+        num_non_match= int(num_trials * 0.25) # Different ships
 
-        num_same = int(num_trials * 0.3) # Match
-        
-        num_control_horizontal = int(num_trials * 0.2) # Control
-        num_control_vertical = int(num_trials * 0.2) # Control
+        num_control_horizontal = int(num_trials * 0.25) # Control ellipse horizontal
+        num_control_vertical = int(num_trials * 0.25) # Control ellipse vertical
         
 
         # Add the angle values in the amounts specified bu num trials proportions
-        trial_list = ['match' for s in range(num_same)]
-        trial_list.extend(['non-match' for d in range(num_diff)])
+        trial_list = ['match' for s in range(num_match)]
+        trial_list.extend(['non_match' for d in range(num_non_match)])
         trial_list.extend(['control_vertical' for c in range(num_control_vertical)])
         trial_list.extend(['control_horizontal' for c in range(num_control_horizontal)])
         # put the list in random order the list
         random.shuffle(trial_list)
         
+        trial_types = {'match':num_match, 'non_match': num_non_match, 'control_vertical':num_control_vertical, 'control_horizontal':num_control_horizontal}
+        ships_dict = {}
+        for t_type, num_of_type in trial_types.items():
+            ships_dict[t_type] = []
+            ships_dict =  self.make_ships_list(t_type, num_of_type, ships_dict)
 
-        return list(trial_list)
 
+        return trial_list, ships_dict
 
-
-
+    def make_ships_list(self, t_type, num_of_type, ships_dict):
+        #TODO add assertions
+        #TODO right now there will be the same ships in a and b lists, which results in half of ships being used. Try to condition ship b to be from a different pair.
+        a_ship = glob.glob('Statki/*a.png')
+        b_ship = glob.glob('Statki/*b.png')
+        
+            
+        pair_dict = dict(zip(a_ship, b_ship))
+        pair_dict.update(dict(zip(b_ship, a_ship)))
+        
+        
+        for i in range(int(math.ceil(num_of_type / 2.0))):
+            
+            idx = np.random.randint(0, len(a_ship))
+            
+            if(t_type == 'non_match'):
+                ships_dict[t_type].append((a_ship[idx],  pair_dict[a_ship[idx]]))     
+                ships_dict[t_type].append((b_ship[idx],  pair_dict[b_ship[idx]]))
+    
+    
+            if(t_type == 'match'):
+                ships_dict[t_type].append((a_ship[idx],  a_ship[idx]))     
+                ships_dict[t_type].append((b_ship[idx],  b_ship[idx]))
+                
+                
+            if('control' in t_type):
+                ships_dict[t_type].append((a_ship[idx],  None))     
+                ships_dict[t_type].append((b_ship[idx],  None))
+                
+            del a_ship[idx]
+            del b_ship[idx]
+        
+        random.shuffle(ships_dict[t_type])
+        
+        return ships_dict
+            
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        

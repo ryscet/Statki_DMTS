@@ -28,13 +28,13 @@ from psychopy import event, core
 ### SETUP PARAMETERS ###
 refresh_rate = 60 # screen refresh rate in Hz. Compare it against check results returned by check.py
 
-num_trials = 60 # First draft of staircase length, use fixed num of trials
+num_trials = 100 # First draft of staircase length, use fixed num of trials
 # Stimulus timings from Serences 2009
 sample_presentation_time = 1.0 # onscreen target 
-ISI = 5.0 # empty screen between target and probe
+ISI = 1.0#5.0 # empty screen between target and probe
 probe_time = 1.0 # probe onscreen time
-ITI = 3.0 # between trial (from response untill new target)
-ITI_2 = 3.0
+ITI = 1.0#3.0 # between trial (from response untill new target)
+ITI_2 = 1.0#3.0
 
 response_wait = 1.0
 
@@ -44,10 +44,11 @@ phase_frames = 20
 ### CONTROLLER OBJECT ###
 
 trial_controler = params.trial_controller(num_trials) # Main helper object responsible for trial sequencing, selecting angles mainly
-
+#ADD ASSERTION TESTS TO TRIAL_CONTROLLER ships dict
 gui = params.instructions_params() # gui elements like written instructions, fixation cross etc
 
 dir_path = os.path.dirname(os.path.realpath(__file__))
+
 
 
 def main(t_control):
@@ -75,6 +76,7 @@ def main(t_control):
         
         t_type, sample_ship_name, target_ship_name = trial_params['t_type'], trial_params['sample_ship'], trial_params['target_ship']
 
+        print('t_type: ' + t_type)
         # Selected in params.prepare_trial
         sample_ship = t_control.sample_ship
         target_ship = t_control.target_ship
@@ -136,9 +138,11 @@ def main(t_control):
 
         gui.toggle_fixation()
         ### EMPTY ###
+
         for frame in range(int(response_wait * refresh_rate)):
             params.win.flip() # Draw an empty screen for short period after probe and then show the anwsers's instructions
 
+        t_control.toggle_frame(False)
 
         ### RESPONSE ###
         #t_control.toggle_frame(False)
@@ -163,19 +167,19 @@ def main(t_control):
                     
                 if thisKey== 'num_4' or thisKey== 'a' :
                     thisResp = 'left'
+                    print('left instruction: ' + instructions[0])
                     correct = check_response(t_type, instructions[0])
-                    print(instructions[0])
                 
                 if thisKey == 'num_5' or thisKey== 's':
                     thisResp = 'middle'
                     correct = 'dont know'
-                    print('dont know')
+                    print('response: dont know')
 
                         
                 elif thisKey == 'num_6' or thisKey== 'd':
                     thisResp = 'right'
+                    print('right instruction: ' +instructions[1])
                     correct = check_response(t_type, instructions[1])
-                    instructions[1]
 
         
                 elif thisKey in ['escape']:
@@ -219,7 +223,6 @@ def main(t_control):
                             
         
         pd_log = log_trial(pd_log, trial, **saved_db[trial])
-        t_control.toggle_frame(False)
         gui.toggle_fixation() # Turn fix on
 
         ### ITI 2###
@@ -245,14 +248,14 @@ def log_trial(pd_log, trial, **kwargs):
 
 def check_response(trial_type, response):
 
-    response_dict = {'match' : {'match' : 'correct', 'non-match' : 'wrong'},
-                     'non-match' : {'match' : 'wrong', 'non-match' : 'correct'},
+    response_dict = {'match' : {'match' : 'correct', 'non_match' : 'wrong'},
+                     'non_match' : {'match' : 'wrong', 'non_match' : 'correct'},
                      'control_horizontal' : {'horizontal' : 'correct', 'vertical' : 'wrong'},
                      'control_vertical' : {'vertical' : 'correct', 'horizontal' : 'wrong'}
                     }
 
     response = response_dict[trial_type][response]
-    print(response)
+    print('response: ' + response + '\n')
     
 
     return response
