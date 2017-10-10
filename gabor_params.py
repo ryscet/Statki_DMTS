@@ -30,10 +30,10 @@ if RunningExp:
     #Define the main application window
     mon = monitors.Monitor('dell', width= 54.61, distance=57)
     mon.setSizePix((1920, 1080))
-    win = visual.Window( size=[1920,1080], fullscr = False, winType  ='pyglet', screen =0, waitBlanking = True, checkTiming = True, monitor = mon)
-   # win = visual.Window([1920,1080],monitor="testMonitor", units="deg")
-    #win.mouseVisible = False
-    #event.Mouse(win = win).setVisible(False)
+    win = visual.Window( size=[1920,1080], fullscr = True, winType  ='pyglet', screen =0, waitBlanking = True, checkTiming = True, monitor = mon)
+    #win = visual.Window( size=[720,480], fullscr = False, winType  ='pyglet', screen =0, waitBlanking = True, checkTiming = True, monitor = mon)
+    win.mouseVisible = False
+    event.Mouse(win = win).setVisible(False)
 
 gabor_size = 11
 fixation_cross_size = 0.02
@@ -140,16 +140,18 @@ class trial_controller(object):
 
         self.sample_ship = visual.ImageStim(win=win, image= sample_ship_name)
 
+        radm, radn, tilt_angle = None, None, None
+
         if 'match' in t_type:
             self.target_ship = visual.ImageStim(win=win, image= target_ship_name)
-            
+
         if 'control' in t_type:
-            ellipse_vertices = self.ellipse(t_type,0)
+            tilt_angle = np.random.uniform(-0.1,0.1)
+            ellipse_vertices, radm, radn = self.ellipse(t_type,tilt_angle)
             self.target_ship = visual.ShapeStim(win=win, vertices = ellipse_vertices.T, units = 'deg')
             target_ship_name = 'ellipse'
-
-        trial_params= {'t_type' : t_type, 'sample_ship' : sample_ship_name, 'target_ship' : target_ship_name}
-
+        
+        trial_params= {'t_type' : t_type, 'sample_ship' : sample_ship_name, 'target_ship' : target_ship_name, 'radm':radm, 'radn':radn, 'tilt' : tilt_angle}
         return trial_params
     
     def toggle_frame(self,toggle):
@@ -166,7 +168,7 @@ class trial_controller(object):
     
     
 
-    def ellipse(self, t_type, ang,Nb=50):
+    def ellipse(self, t_type, ang,Nb=300):
         '''
         ra - major axis length
         rb - minor axis length
@@ -175,10 +177,10 @@ class trial_controller(object):
         Nb - No. of points that make an ellipse
         '''
         xpos,ypos=0,0
-        if 'vertical' in t_type: 
-            radm,radn=8,7
-        if 'horizontal' in t_type:
-            radm,radn=7,8
+        if 'horizontal' in t_type: 
+            radm,radn=8,7 + np.random.uniform(-0.8,0.8)
+        if 'vertical' in t_type:
+            radm,radn=7 + np.random.uniform(-0.8,0.8),8
         
             
         
@@ -187,7 +189,7 @@ class trial_controller(object):
         X=radm*cos(the)*co-si*radn*sin(the)+xpos
         Y=radm*cos(the)*si+co*radn*sin(the)+ypos
         arr =  np.stack((X,Y))
-        return arr
+        return arr, radm, radn
         
 
 

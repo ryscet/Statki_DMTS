@@ -30,11 +30,11 @@ refresh_rate = 60 # screen refresh rate in Hz. Compare it against check results 
 
 num_trials = 100 # First draft of staircase length, use fixed num of trials
 # Stimulus timings from Serences 2009
-sample_presentation_time = 1.0 # onscreen target 
-ISI = 1.0#5.0 # empty screen between target and probe
-probe_time = 1.0 # probe onscreen time
-ITI = 1.0#3.0 # between trial (from response untill new target)
-ITI_2 = 1.0#3.0
+sample_presentation_time = 1.5 # onscreen target 
+ISI = 5.0 # empty screen between target and probe
+probe_time = 1.5 # probe onscreen time
+ITI = 3.0 # between trial (from response untill new target)
+ITI_2 = 3.0
 
 response_wait = 1.0
 
@@ -86,11 +86,11 @@ def main(t_control):
 
         if('control' in t_type):
             #gui.set_fixation_color('Red')
-            t_control.set_frame_color('DarkRed')
+            t_control.set_frame_color('DarkGreen')
 
         else:
            # gui.set_fixation_color('Green')
-            t_control.set_frame_color('DarkGreen')
+            t_control.set_frame_color('DarkRed')
 
 
         
@@ -217,7 +217,10 @@ def main(t_control):
                             'key_time' : key_time,
                             'key_time_psychopy' : key_time_psychopy,
                             'participant' : params.expInfo['participant'],
-                            'start_time' : START_TIME
+                            'start_time' : START_TIME,
+                            'radm':trial_params['radm'], 
+                            'radn':trial_params['radn'], 
+                            'titlt' : trial_params['tilt']
                             }
     
                             
