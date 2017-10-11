@@ -2,46 +2,55 @@
 # -*- coding: utf-8 -*-
 """
 Experiment:
-    Show a series of gabor patches pairs. First gabor is the target, sceond is the probe. Subjects reply whether the probe is identical to the target. 
-    
+	Delayed-Match-To-Sample Experiment. 
+	Pair of stimuli is presented and subjects decide if the two objects are the same or different.
+
+    Method used for accurate time tracking in the experiment:
     classmethod datetime.now([tz])
         Return the current local date and time. If optional argument tz is None or not specified, this is like today(), 
         but, if possible, supplies more precision than can be gotten from going through a time.time() timestamp 
         (for example, this may be possible on platforms supplying the C gettimeofday() function). - think this is only for unix
     
 """
+
+# This class has all the setup for the experiment. 
+# Here we define stimuli, gui elements (like fixation point and instructions),configure trials and some more small stuff
+# By importing this class we automatically open psychopy window
 import gabor_params as params #helper class
 
-from psychopy import prefs
-
+#Regular imports
 import pandas as pd
 import numpy as np
 from datetime import datetime
 from collections import OrderedDict
 import pickle 
 import os 
-import random
+
+#Psychopy imports
 from psychopy import event, core
+from psychopy import prefs
 
 
-
-### SETUP PARAMETERS ###
+### Setup Parameters ###
 refresh_rate = 60 # screen refresh rate in Hz. Compare it against check results returned by check.py
 
 num_trials = 100 # First draft of staircase length, use fixed num of trials
-# Stimulus timings from Serences 2009
-sample_presentation_time = 1.5 # onscreen target 
-ISI = 5.0 # empty screen between target and probe
-probe_time = 1.5 # probe onscreen time
-ITI = 3.0 # between trial (from response untill new target)
-ITI_2 = 3.0
 
+# Stimulus timings (in seconds, ex: 1.5 means 1sec 500ms):
+sample_presentation_time = 1.5  # First ship time
+probe_time = 1.5                # Second ship and ellipsis time
+ISI = 5.0                       # Delay time (aka Inter-Stimulus-Interval) empty screen between first and second ship/ellipsis.
+ITI = 6.0                       # Inter-Trial-Interval, time from subject pressing response button untill beggining of a new trial. In the half of this time, before new trial a color frame appears.
 response_wait = 1.0
 
-phase_step = 0.5 
-phase_frames = 20
+### Time Calibration ###
+#Calibration measures the real screen refresh rate and it's variabillity. It needs to be performed for a monitor once.
+assert os.path.exists('CALIBRATION_RESULaTS.npy'), 'SCREEN CALIBRATION WAS NOT CONDUCTED. Run check.py'
+refresh_rate = float(np.load('CALIBRATION_RESULTS.npy')) # check.py saves the screen refresh rate, here we read it.
+# !!!! NOTE !!!! The precision of stimulus presentation timing will depend on refresh rate and it's variabillity. 
+# The formula for calculating number of frames for stimulus presentation is: int(refresh_rate * seconds). This will be rounded down to the nearest frame.
 
-### CONTROLLER OBJECT ###
+### Conntroller Object ###
 
 trial_controler = params.trial_controller(num_trials) # Main helper object responsible for trial sequencing, selecting angles mainly
 #ADD ASSERTION TESTS TO TRIAL_CONTROLLER ships dict
@@ -49,10 +58,26 @@ gui = params.instructions_params() # gui elements like written instructions, fix
 
 dir_path = os.path.dirname(os.path.realpath(__file__))
 
+#TODO ADD ASSERTION TO TIMINGS - assert timedelta == time in seconds +/- variabillity * 2 
+#TODO rename scripts, remove stuff related to gabors
 
 
 def main(t_control):
-
+    """Main loop for presenting consecutive trials. 
+       Each trial is made of a sequence of pseudo-randomly (shuffle) stimuli presented in the same order:
+       
+       1) Color frame informing about the condition (experimental or control) and a fixation point
+       2) first object to be rememebered (experimental condition) or ignored  (control condition)
+       3) Empty screen for the delay
+       4) Second stimuli probing the memory (experimental condition) or perception (control condition)
+       5) Response screen 
+       6) Empty screen between trials.
+    
+    Each stimulus is presented in a loop of the same structure using psychopy library:
+    for frame in range(number of frames):
+        stimulus.draw()
+        win.flip()
+    """
     ### LOG VARIABLES ###
     saved_db = OrderedDict() # Log is a dictionary, key is trial number, value is a tuple with all parameters: (thisResp, response_time, diff_index, step_list[diff_index], angle, orientation)
 
@@ -82,10 +107,8 @@ def main(t_control):
         target_ship = t_control.target_ship
 
         # COLOR FRAME for trial type, hold (DMTS) or drop (control)
-        t_control.toggle_frame(True)
-
         if('control' in t_type):
-            #gui.set_fixation_color('Red')
+            #gui.set_fixation_color('Red') # Old function, not used
             t_control.set_frame_color('DarkGreen')
 
         else:
@@ -97,10 +120,12 @@ def main(t_control):
         #### ITI ####
         ITI_time = pd.to_datetime(datetime.now().strftime('%Y-%m-%d %H:%M:%S.%f'))
         ITI_time_psychopy = clock.getTime()
-
+	
+        print('start: ' + str(pd.to_datetime(datetime.now().strftime('%Y-%m-%d %H:%M:%S.%f'))))
         for frame in range(int(ITI * refresh_rate)):
+            if(frame == int((ITI * refresh_rate )/ 2)): t_control.toggle_frame(True);print('middle: ' +str(pd.to_datetime(datetime.now().strftime('%Y-%m-%d %H:%M:%S.%f'))))
             params.win.flip()
-        
+        print('end: ' + str(pd.to_datetime(datetime.now().strftime('%Y-%m-%d %H:%M:%S.%f'))))
 
         #### SAMPLE ####
         target_appeared = pd.to_datetime(datetime.now().strftime('%Y-%m-%d %H:%M:%S.%f'))
@@ -229,10 +254,9 @@ def main(t_control):
         gui.toggle_fixation() # Turn fix on
 
         ### ITI 2###
-        for frame in range(int( ITI_2 * refresh_rate)):
-            params.win.flip() # Draw an empty screen for short period after probe and then show the anwsers's instructions
-
-
+ #       for frame in range(int( ITI_2 * refresh_rate)):
+#            params.win.flip() 
+#
     
     params.win.close()
     

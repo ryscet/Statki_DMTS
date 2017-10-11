@@ -16,6 +16,7 @@ import psychopy.info
 from datetime import datetime
 import os 
 import pickle 
+import numpy as np
 
 
 # author and version are used in the demo, in the way you might in your experiment.
@@ -67,12 +68,13 @@ if "windowRefreshTimeAvg_ms" in runInfo.keys():
 and re-run the demo.""")
 
 
+dir_path = os.path.dirname(os.path.realpath(__file__))
+np.save('CALIBRATION_RESULTS', runInfo["windowRefreshTimeAvg_ms"])
+
+with open(dir_path + datetime.now().strftime('_%Y_%m_%d_') + 'config_info.pickle', 'wb') as handle:
+    pickle.dump(runInfo, handle)
+
 win.close()
 core.quit()
 
-dir_path = os.path.dirname(os.path.realpath(__file__))
-
-
-with open(dir_path + '/exp_logs/' + datetime.now().strftime('_%Y_%m_%d_') + 'config_info.pickle', 'wb') as handle:
-    pickle.dump(runInfo, handle)
 # The contents of this file are in the public domain.
